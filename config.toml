@@ -24,9 +24,9 @@ twitter = "GoHugoIO"
   ## This is used when the BaseURL does not need to modified (eg, in share links or in prerender, prefetch, etc to control for relativeURLs setting); do *not* include trailing slash
   siteaddress = "https://hugodocs.info"
   ## Gh repo for site footer (include trailing slash)
-  ghrepo = "https://github.com/gohugoio/hugo/"
+  ghrepo = "https://github.com/gohugoio/hugoDocs/"
   ### Edit content repo (set to automatically enter "edit" mode; this is good for "improve this page" links)
-  ghdocsrepo = "https://github.com/gohugoio/hugo/tree/master/docs"
+  ghdocsrepo = "https://github.com/gohugoio/hugoDocs/tree/master/docs"
   ## Gitter URL
   gitter = "https://gitter.im/spf13/hugo"
   ## Discuss Forum URL

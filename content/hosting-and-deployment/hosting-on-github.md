@@ -1,94 +1,129 @@
 ---
-aliases:
-    - /tutorials/github_pages_blog/
-author: Spencer Lyon, Gunnar Morling
-lastmod: 2017-01-11
-date: 2014-03-21
+title: Hosting on GitHub
 linktitle: Hosting on GitHub
-toc: true
+description: Deploy Hugo as a GitHub Pages project or personal/organizational site and automate the whole process with a simple shell script.
+date: 2014-03-21
+publishdate: 2014-03-21
+lastmod: 2017-03-30
+categories: [hosting and deployment]
+tags: [github,git,deployment,hosting]
+authors: [Spencer Lyon, Gunnar Morling]
 menu:
-  main:
-    parent: tutorials
-next: /tutorials/how-to-contribute-to-hugo/
-prev: /tutorials/creating-a-new-theme
-title: Hosting on GitHub Pages
-weight: 10
+  docs:
+    parent: "hosting-and-deployment"
+    weight: 30
+weight: 30
+sections_weight: 30
+draft: false
+toc: true
+aliases: [/tutorials/github-pages-blog/]
 ---
 
-*This tutorial was contributed by [Spencer Lyon](http://spencerlyon.com/) (Personal/Organization Pages) and [Gunnar Morling](https://github.com/gunnarmorling/).*
+GitHub provides free and fast static hosting over SSL for personal, organization, or project pages directly from a GitHub repository via its [GitHub Pages service][].
 
-## Introduction
+## Assumptions
 
-This tutorial describes how to deploy your Hugo based website to [GitHub pages](https://pages.github.com/).
+1. You have Git 2.5 or greater [installed on your machine][installgit].
+2. You have a GitHub account. [Signing up][ghsignup] for GitHub is free.
+3. You have a ready-to-publish Hugo website or have at least completed the [Quick Start][].
 
-The following sections are based on the assumption that you are working with a "Project Pages Site".
-This means that you'll have your Hugo sources and the generated HTML output within a single repository
-(in contrast, with a "User/Organization Pages Site", you'd have one repo for the sources and another repo for the published HTML files;
-refer to the [GitHub Pages docs](https://help.github.com/articles/user-organization-and-project-pages/) to learn more).
+If you are working within an Organization account or want to set up a User website on GitHub and would like more information, refer to the [GitHub Pages documentation][ghorgs].
 
-## Deployment via _/docs_ folder on master branch
+{{% note %}}
+Make sure your `baseURL` key-value in your [site configuration](/getting-started/configuration/) reflects the full URL of your GitHub pages repository if you're using the default GH Pages URL (e.g., `username.github.io/myprojectname/`) and not a custom domain.
+{{% /note %}}
 
-[As described](https://help.github.com/articles/configuring-a-publishing-source-for-github-pages/#publishing-your-github-pages-site-from-a-docs-folder-on-your-master-branch) in the GitHub Pages docs, you can deploy from a folder called _docs_ on your master branch.
-This requires to change the Hugo publish directory in the site config (e.g. _config.toml_):
+## Deployment via `/docs` Folder on Master Branch
 
-    publishDir = "docs"
+[As described in the GitHub Pages documentation][ghpfromdocs], you can deploy from a folder called `docs/` on your master branch. To effectively use this feature with Hugo, you need to change the Hugo publish directory in your [site's][config] `config.toml` and `config.yaml`, respectively:
 
-After running `hugo`, push your master branch to the remote repo and choose the _docs_ folder as the website source of your repo
-(in your GitHub project, go to "Settings " -> "GitHub Pages" -> "Source" -> Select "master branch /docs folder").
-If that option isn't enabled, you likely haven't pushed your _docs_ folder yet.
+```yaml
+publishDir: docs
+```
 
-This is the simplest approach but requires the usage of a non-standard publish directory
-(GitHub Pages cannot be configured to use another directory than _docs_ currently).
-Also the presence of generated files on the master branch may not be to everyone's taste.
+```toml
+publishDir = "docs"
+```
 
-## Deployment via gh-pages branch
+After running `hugo`, push your master branch to the remote repository and choose the `docs/` folder as the website source of your repo. Do the following from within your GitHub project:
 
-Alternatively, you can deploy site through a separate branch called "gh_pages".
-That approach is a bit more complex but has some advantages:
+1. Go to **Settings** &rarr; **GitHub Pages**
+2. From **Source**,  select "master branch /docs folder". If the option isn't enabled, you likely do not have a `docs/` folder in the root of your project.
 
-* It keeps sources and generated HTML in two different branches
-* It uses the default _public_ folder
-* It keeps the histories of source branch and gh-pages branch fully separated from each other
+{{% note %}}
+The `docs/` option is the simplest approach but requires you set a publish directory in your site configuration. You cannot currently configure GitHub pages to publish from another directory on master, and not everyone prefers the output site live concomitantly with source files in version control.
+{{% /note %}}
 
-### Preparations
+## Deployment From Your `gh-pages` Branch
 
-These steps only need to be done once (replace "upstream" with the name of your remote, e.g. "origin"):
-First, add the _public_ folder to _.gitignore_ so it's ignored on the master branch:
+You can also tell GitHub pages to treat your `master` branch as the published site or point to a separate `gh-pages` branch. The latter approach is a bit more complex but has some advantages:
 
-    echo "public" >> .gitignore
+* It keeps your source and generated website in different branches and therefore maintains version control history for both.
+* Unlike the preceding `docs/` option, it uses the default `public` folder.
 
-Then initialize the gh-pages branch as an empty [orphan branch](https://git-scm.com/docs/git-checkout/#git-checkout---orphanltnewbranchgt):
+### Preparations for `gh-pages` Branch
 
-    git checkout --orphan gh-pages
-    git reset --hard
-    git commit --allow-empty -m "Initializing gh-pages branch"
-    git push upstream gh-pages
-    git checkout master
+These steps only need to be done once. Replace `upstream` with the name of your remote; e.g., `origin`:
+
+#### Add the Public Folder
+
+First, add the `public` folder to your `.gitignore` file at the project root so that the directory is ignored on the master branch:
+
+```bash
+echo "public" >> .gitignore
+```
+
+#### Initialize Your `gh-pages` Branch
+
+You can now initialize your `gh-pages` branch as an empty [orphan branch][]:
+
+```bash
+git checkout --orphan gh-pages
+git reset --hard
+git commit --allow-empty -m "Initializing gh-pages branch"
+git push upstream gh-pages
+git checkout master
+```
 
 ### Building and Deployment
 
-Now check out the gh-pages branch into your _public_ folder, using git's [worktree feature](https://git-scm.com/docs/git-worktree)
-(essentially, it allows you to have multiple branches of the same local repo to be checked out in different directories):
+Now check out the `gh-pages` branch into your `public` folder using git's [worktree feature][]. Essentially, the worktree allows you to have multiple branches of the same local repository to be checked out in different directories:
 
-    rm -rf public
-    git worktree add -B gh-pages public upstream/gh-pages
-
-Regenerate the site using Hugo and commit the generated files on the gh-pages branch:
-
-    hugo
-    cd public && git add --all && git commit -m "Publishing to gh-pages" && cd ..
-
-If the changes in your local gh-pages branch look alright, push them to the remote repo:
-
-    git push upstream gh-pages
-
-After a short while you'll see the updated contents on your GitHub Pages site.
-
-### Putting it into a script
-
-To automate these steps, you can create a script _scripts/publish_to_ghpages.sh_ with the following contents:
-
+```sh
+rm -rf public
+git worktree add -B gh-pages public upstream/gh-pages
 ```
+
+Regenerate the site using the `hugo` command and commit the generated files on the `gh-pages` branch:
+
+{{% code file="commit-gh-pages-files.sh"%}}
+```bash
+hugo
+cd public && git add --all && git commit -m "Publishing to gh-pages" && cd ..
+```
+{{% /code %}}
+
+If the changes in your local `gh-pages` branch look alright, push them to the remote repo:
+
+```bash
+git push upstream gh-pages
+```
+
+#### Setting `gh-pages` as Your Publish Branch
+
+In order to use your `gh-pages` branch as your publishing branch, you'll need to configure the repository within the GitHub UI. This will likely happen automatically once GitHub realizes you've created this branch. You can also set the branch manually from within your GitHub project:
+
+1. Go to **Settings** &rarr; **GitHub Pages**
+2. From **Source**,  select "gh-pages branch" and then **Save**. If the option isn't enabled, you likely have not created the branch yet OR you have not pushed the branch from your local machine to the hosted repository on GitHub.
+
+After a short while, you'll see the updated contents on your GitHub Pages site.
+
+### Putting it Into a Script
+
+To automate these steps, you can create a script with the following contents:
+
+{{% code file="publish_to_ghpages.sh" %}}
+```sh
 #!/bin/sh
 
 DIR=$(dirname "$0")
@@ -119,54 +154,57 @@ hugo
 echo "Updating gh-pages branch"
 cd public && git add --all && git commit -m "Publishing to gh-pages (publish.sh)"
 ```
+{{% /code %}}
 
-This will abort if there are pending changes in the working directory and also makes sure that all previously existing output files are removed.
-Adjust the script to taste, e.g. to include the final push to the remote repository if you don't need to take a look at the gh-pages branch before pushing. Or adding `echo yourdomainname.com >> CNAME` if you set up for your gh-pages to use customize domain. 
+This will abort if there are pending changes in the working directory and also makes sure that all previously existing output files are removed. Adjust the script to taste, e.g. to include the final push to the remote repository if you don't need to take a look at the gh-pages branch before pushing. Or adding `echo yourdomainname.com >> CNAME` if you set up for your gh-pages to use customize domain.
 
-## Deployment with Git 2.4 and earlier
+## Deployment From Your `master` Branch
 
-The `worktree` command was only introduced in Git 2.5.
-If you are still on an earlier version and cannot update, you can simply clone your local repo into the _public_ directory, only keeping the gh-pages branch:
+To use `master` as your publishing branch, you'll need your rendered website to live at the root of the GitHub repository. Steps should be similar to that of the `gh-pages` branch, with the exception that you will create your GitHub repository with the `public` directory as the root. Note that this does not provide the same benefits of the `gh-pages` branch in keeping your source and output in separate, but version controlled, branches within the same repo.
 
-    git clone .git --branch gh-pages public
+You will also need to set `master` as your publishable branch from within the GitHub UI:
 
-Having re-generated the site, you'd push back the gh-pages branch to your primary local repo:
+1. Go to **Settings** &rarr; **GitHub Pages**
+2. From **Source**,  select "master branch" and then **Save**.
 
-    cd public && git add --all && git commit -m "Publishing to gh-pages" && git push origin gh-pages
+## Hosting GitHub User or Organization Pages
 
-The other steps are the same as with the worktree approach.
+As mentioned [in this GitHub Help article](https://help.github.com/articles/user-organization-and-project-pages/), you can host a user/organization page in addition to project pages. Here are the key differences in GitHub Pages websites for Users and Organizations:
 
-## Hosting Personal/Organization Pages
+1. You must use the `<USERNAME>.github.io` naming scheme for your GitHub repo.
+2. Content from the `master` branch will be used to publish your GitHub Pages site.
 
-As mentioned [in this GitHub's article](https://help.github.com/articles/user-organization-and-project-pages/), besides project pages, you may also want to host a user/organization page. Here are the key differences:
+It becomes much simpler in this case: we'll create two separate repos, one for Hugo's content, and a git submodule with the `public` folder's content in it.
 
-> - You must use the `username.github.io` naming scheme.
-> - Content from the `master` branch will be used to build and publish your GitHub Pages site.
+### Step-by-step Instructions
 
-It becomes much simpler in that case: we'll create two separate repos, one for Hugo's content, and a git submodule with the `public` folder's content in it.
+1. Create a `<YOUR-PROJECT>` git repository on GitHub. This repository will contain Hugo's content and other source files.
+2. Create a `<USERNAME>.github.io` GitHub repository. This is the repository that will contain the fully rendered version of your Hugo website.
+3. `git clone <YOUR-PROJECT-URL> && cd <YOUR-PROJECT>`
+4. Make your website work locally (`hugo server` or `hugo server -t <YOURTHEME>`) and open your browser to <http://localhost:1313>.
+5. Once you are happy with the results:
+    * Press <kbd>Ctrl</kbd>+<kbd>C</kbd> to kill the server
+    * `rm -rf public` to completely remove the `public` directory if there
+6. `git submodule add -b master git@github.com:<USERNAME>/<USERNAME>.github.io.git public`. This creates a git [submodule][]. Now when you run the `hugo` command to build your site to `public`, the created `public` directory will have a different remote origin (i.e. hosted GitHub repository). You can automate some of these steps with the following script.
 
-Step by step:
+#### Putting it Into a Script
 
-1. Create on GitHub `<your-project>-hugo` repository (it will host Hugo's content)
-2. Create on GitHub `<username>.github.io` repository (it will host the `public` folder: the static website)
-3. `git clone <<your-project>-hugo-url> && cd <your-project>-hugo`
-4. Make your website work locally (`hugo server -t <yourtheme>`)
-5. Once you are happy with the results, <kbd>Ctrl</kbd>+<kbd>C</kbd> (kill server) and `rm -rf public` (don't worry, it can always be regenerated with `hugo -t <yourtheme>`)
-6. `git submodule add -b master git@github.com:<username>/<username>.github.io.git public`
-7. Almost done: add a `deploy.sh` script to help you (and make it executable: `chmod +x deploy.sh`):
+You're almost done. You can also add a `deploy.sh` script to automate the preceding steps for you. You can also make it executable with `chmod +x deploy.sh`.
 
-```
+The following are the contents of the `deploy.sh` script:
+
+```sh
 #!/bin/bash
 
 echo -e "\033[0;32mDeploying updates to GitHub...\033[0m"
 
 # Build the project.
-hugo # if using a theme, replace by `hugo -t <yourtheme>`
+hugo # if using a theme, replace with `hugo -t <YOURTHEME>`
 
 # Go To Public folder
 cd public
 # Add changes to git.
-git add -A
+git add .
 
 # Commit changes.
 msg="rebuilding site `date`"
@@ -178,20 +216,29 @@ git commit -m "$msg"
 # Push source and build repos.
 git push origin master
 
-# Come Back
+# Come Back up to the Project Root
 cd ..
 ```
-7. `./deploy.sh "Your optional commit message"` to send changes to `<username>.github.io` (careful, you may also want to commit changes on the `<your-project>-hugo` repo).
 
-That's it! Your personal page is running at [http://username.github.io/](http://username.github.io/) (after up to 10 minutes delay).
 
-## Using a custom domain
+You can then run `./deploy.sh "Your optional commit message"` to send changes to `<USERNAME>.github.io`. Note that you likely will want to commit changes to your `<YOUR-PROJECDT>` repository as well.
 
-If you'd like to use a custom domain for your GitHub Pages site, create a file _static/CNAME_ with the domain name as its sole contents.
-This will put the CNAME file to the root of the published site as required by GitHub Pages.
+That's it! Your personal page should be up and running at `https://yourusername.github.io` within a couple minutes.
 
-Refer to the [official documentation](https://help.github.com/articles/using-a-custom-domain-with-github-pages/) for further information.
+## Using a Custom Domain
 
-## Conclusion
+If you'd like to use a custom domain for your GitHub Pages site, create a file `static/CNAME`. Your custom domain name should be the only contents inside `CNAME`. Since it's inside `static`, the published site will contain the CNAME file at the root of the published site, which is a requirements of GitHub Pages.
 
-Hopefully this tutorial helped you to get your website off its feet and out into the open! If you have any further questions, feel free to contact the community through the [discussion forum](/community/mailing-list/).
+Refer to the [official documentation for custom domains][domains] for further information.
+
+[config]: /getting-started/configuration/
+[domains]: https://help.github.com/articles/using-a-custom-domain-with-github-pages/
+[ghorgs]: https://help.github.com/articles/user-organization-and-project-pages/#user--organization-pages
+[ghpfromdocs]: https://help.github.com/articles/configuring-a-publishing-source-for-github-pages/#publishing-your-github-pages-site-from-a-docs-folder-on-your-master-branch
+[ghsignup]: https://github.com/join
+[GitHub Pages service]: https://help.github.com/articles/what-is-github-pages/
+[installgit]: https://git-scm.com/downloads
+[orphan branch]: https://git-scm.com/docs/git-checkout/#git-checkout---orphanltnewbranchgt
+[Quick Start]: /getting-started/quick-start/
+[submodule]: https://github.com/blog/2104-working-with-submodules
+[worktree feature]: https://git-scm.com/docs/git-worktree

@@ -1,26 +1,30 @@
 ---
-authors:
-- Jason Gowans
-lastmod: 2017-02-04
-date: 2017-02-04
+title: Hosting on Bitbucket
 linktitle: Hosting on Bitbucket
-toc: true
+description: You can use Bitbucket in conjunction with Aerobatic to build, deploy, and host a Hugo website.
+date: 2017-02-04
+publishdate: 2017-02-04
+lastmod: 2017-02-04
+categories: [hosting and deployment]
+tags: [hosting,bitbucket,deployment,aerobatic]
+authors: [Jason Gowans]
 menu:
-  main:
-    parent: tutorials
-next: /tutorials/github-pages-blog
-prev: /tutorials/creating-a-new-theme
-title: Continuous deployment with Bitbucket & Aerobatic
-weight: 10
+  docs:
+    parent: "hosting-and-deployment"
+    weight: 50
+weight: 50
+sections_weight: 50
+draft: false
+toc: true
+aliases: [/tutorials/hosting-on-bitbucket/]
 ---
 
-# Continuous deployment with Bitbucket & Aerobatic
+You can use [Bitbucket](https://bitbucket.org/) and [Aerobatic](https://www.aerobatic.com) to build, deploy, and host a Hugo website. Aerobatic is a static hosting service that integrates with Bitbucket and provides a free hosting tier.
 
-## Introduction
+## Assumptions
 
-In this tutorial, we will use [Bitbucket](https://bitbucket.org/) and [Aerobatic](https://www.aerobatic.com) to build, deploy, and host a Hugo site. Aerobatic is a static hosting service that integrates with Bitbucket and provides a free hosting tier.
-
-It is assumed that you know how to use git for version control and have a Bitbucket account.
+* Working familiarity with Git for version control
+* A [Bitbucket account](https://bitbucket.org/account/signup/)
 
 ## Install Aerobatic CLI
 
@@ -54,7 +58,7 @@ We will now create a git repository and then push our code to Bitbucket. In Bitb
 
 ![][1]
 
-[1]: /img/tutorials/hosting-on-bitbucket/bitbucket-create-repo.png
+[1]: /images/hosting-and-deployment/hosting-on-bitbucket/bitbucket-create-repo.png
 
 
 ```bash
@@ -72,6 +76,7 @@ git push -u origin master
 ```
 
 ## Continuous Deployment With Bitbucket Pipelines
+
 In the example above, we pushed the compiled assets in the `/public` folder to Aerobatic. In the following example, we use Bitbucket Pipelines to continuously create and deploy the compiled assets to Aerobatic.
 
 ### Step 1: Configure Bitbucket Pipelines
@@ -92,7 +97,7 @@ pipelines:
           script:
             - apt-get update -y && apt-get install wget
             - apt-get -y install git
-            - wget https://github.com/gohugoio/hugo/releases/download/v0.18/hugo_0.18-64bit.deb
+            - wget https://github.com/spf13/hugo/releases/download/v0.18/hugo_0.18-64bit.deb
             - dpkg -i hugo*.deb
             - git clone https://github.com/eliasson/liquorice themes/liquorice
             - hugo --theme=liquorice --baseURL https://__baseurl__ --buildDrafts
@@ -100,7 +105,7 @@ pipelines:
             - aero deploy
 ```
 
-### Step 2: Create `AEROBATIC_API_KEY` environment variable. 
+### Step 2: Create `AEROBATIC_API_KEY` environment variable.
 
 This step only needs to be done once per account. From the command line;
 
@@ -112,7 +117,7 @@ aero apikey
 2. Scroll down to the bottom of the left nav and click the Environment variables link in the PIPELINES section.
 3. Create a new environment variable called AEROBATIC_API_KEY with the value you got by running the `aero apikey` command. Be sure to click the Secured checkbox.
 
-## Step 3: Edit and Commit Code
+### Step 3: Edit and Commit Code
 
 ```bash
 hugo new post/good-to-great.md
@@ -130,7 +135,7 @@ At this point, you can now create and edit blog posts directly in the Bitbucket 
 
 ![][2]
 
-[2]: /img/tutorials/hosting-on-bitbucket/bitbucket-blog-post.png
+[2]: /images/hosting-and-deployment/hosting-on-bitbucket/bitbucket-blog-post.png
 
 
 ## Suggested next steps
